@@ -71,6 +71,17 @@ pub mod certificate_registry {
 
         Ok(())
     }
+
+    /// Close a revoked credential and return its rent to the issuer.
+    pub fn close(ctx: Context<CloseCredential>, credential_id: [u8; 32]) -> Result<()> {
+        let credential = &ctx.accounts.credential;
+        require!(credential.revoked, CertError::CredentialStillActive);
+        emit!(CredentialClosed {
+            issuer: credential.issuer,
+            credential_id,
+        });
+        Ok(())
+    }
 }
 
 // ── Accounts ──────────────────────────────────────────────────────────────────
@@ -120,6 +131,21 @@ pub struct Update<'info> {
     pub issuer: Signer<'info>,
 }
 
+#[derive(Accounts)]
+#[instruction(credential_id: [u8; 32])]
+pub struct CloseCredential<'info> {
+    #[account(
+        mut,
+        close = issuer,
+        seeds = [b"credential", issuer.key().as_ref(), credential_id.as_ref()],
+        bump = credential.bump,
+        has_one = issuer @ CertError::Unauthorized,
+    )]
+    pub credential: Account<'info, Credential>,
+    #[account(mut)]
+    pub issuer: Signer<'info>,
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 
 #[account]
@@ -163,12 +189,20 @@ pub struct CredentialRevoked {
     pub revoked_at:    i64,
 }
 
+#[event]
+pub struct CredentialClosed {
+    pub issuer: Pubkey,
+    pub credential_id: [u8; 32],
+}
+
 // ── Errors ────────────────────────────────────────────────────────────────────
 
 #[error_code]
 pub enum CertError {
-    #[msg("Solo el emisor original puede revocar esta credencial")]
+    #[msg("Solo el emisor original puede administrar esta credencial")]
     Unauthorized,
     #[msg("La credencial ya fue revocada")]
     AlreadyRevoked,
+    #[msg("Revoca la credencial antes de cerrar la cuenta")]
+    CredentialStillActive,
 }
