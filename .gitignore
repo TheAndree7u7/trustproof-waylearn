@@ -1,0 +1,37 @@
+# Private work and submission drafts
+private/
+private_sol/
+wacamole/
+ENTREGABLES/
+docs/
+design/
+research/
+notes/
+.agents/
+.claude/
+.codex/
+.aws/
+
+# Credentials and runtime configuration
+.env
+.env.*
+!.env.example
+*keypair*.json
+*-trustproof.json
+id.json
+*.pem
+*.key
+
+# Build outputs and local validator state
+node_modules/
+.next/
+out/
+target/
+.anchor/
+.vercel/
+test-ledger*/
+ledger/
+*.tsbuildinfo
+*.log
+coverage/
+test-results/
