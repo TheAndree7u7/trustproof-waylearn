@@ -47,7 +47,13 @@ assert.equal(issued.revoked, false)
 const unauthorized = /ConstraintSeeds|Unauthorized|0x7d6|0x1770/
 await assert.rejects(() => send(program.methods.update(id, changedHash).accountsStrict(accounts(outsider)), outsider), unauthorized)
 await assert.rejects(() => send(program.methods.revoke(id).accountsStrict(accounts(outsider)), outsider), unauthorized)
+const mismatchedId = [...id]
+mismatchedId[0] ^= 1
+await assert.rejects(() => send(program.methods.update(mismatchedId, changedHash).accountsStrict(accounts(issuer)), issuer), /ConstraintSeeds|0x7d6/)
 await assert.rejects(() => send(program.methods.close(id).accountsStrict(accounts(issuer)), issuer), /CredentialStillActive|0x1772/)
+const unchanged = await program.account.credential.fetch(credential)
+assert.deepEqual(unchanged.evidenceHash, originalHash)
+assert.equal(unchanged.revoked, false)
 
 const updated = await send(program.methods.update(id, changedHash).accountsStrict(accounts(issuer)), issuer)
 assert.deepEqual((await program.account.credential.fetch(credential)).evidenceHash, changedHash)
@@ -58,6 +64,7 @@ assert.equal(revocation.revoked, true)
 assert.ok(revocation.revokedAt)
 await assert.rejects(() => send(program.methods.update(id, originalHash).accountsStrict(accounts(issuer)), issuer), /AlreadyRevoked|0x1771/)
 await assert.rejects(() => send(program.methods.close(id).accountsStrict(accounts(outsider)), outsider), unauthorized)
+assert.equal((await program.account.credential.fetch(credential)).revoked, true)
 
 const before = await connection.getBalance(issuer.publicKey)
 const rent = (await connection.getAccountInfo(credential)).lamports
@@ -68,6 +75,6 @@ assert.ok(closeTransaction?.meta)
 assert.equal(await connection.getBalance(issuer.publicKey), before + rent - closeTransaction.meta.fee)
 
 console.log(JSON.stringify({
-  checked: ["register", "read", "update", "revoke", "close", "issuer-only", "rent-returned"],
+  checked: ["register", "read", "update", "revoke", "close", "issuer-only", "seed-match", "rent-returned"],
   credential: credential.toBase58(), registered, updated, revoked, closed,
 }, null, 2))

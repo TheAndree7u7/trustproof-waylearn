@@ -2,6 +2,12 @@
 
 Registro verificable de credenciales en Solana. Una cuenta derivada del programa (PDA) guarda la clave pública del emisor, el identificador y el SHA-256 de la evidencia. La interfaz puede calcular el hash de un archivo en el navegador.
 
+## Ruta y aporte
+
+**Proyecto propio · Blue Sky (Libre).** El punto de partida es el programa de TrustProof que registraba y revocaba credenciales. El aporte agrega actualización del hash, cierre después de la revocación y una interfaz que lee y ejecuta las instrucciones desde el IDL de Anchor.
+
+El programa exige la firma del emisor y comprueba que la PDA corresponde a ese emisor y a ese identificador. El cierre devuelve la renta a la misma wallet.
+
 ## Demo
 
 Requiere Node.js 22 y Phantom para firmar operaciones. La consulta de una PDA es pública.
@@ -48,3 +54,19 @@ npm run test:localnet
 ```
 
 La prueba usa wallets temporales y verifica el ciclo completo, las restricciones del emisor y la devolución de renta.
+
+### Casos comprobados en Localnet
+
+La prueba parte de una credencial sin registrar, una wallet emisora y otra wallet de prueba. Consulta la PDA después de cada cambio.
+
+| Caso | Resultado comprobado |
+| --- | --- |
+| Registrar y leer | La PDA guarda el emisor, el hash inicial y el estado activo. |
+| Actualizar como emisor | Cambia el hash en la misma PDA y se conserva el emisor. |
+| Firmar con otra wallet | El programa rechaza actualización, revocación y cierre. |
+| Usar un identificador ajeno a la PDA | El programa rechaza la actualización y conserva el hash. |
+| Cerrar una credencial activa | El programa rechaza el cierre y conserva la cuenta. |
+| Revocar y volver a editar | La revocación queda registrada y una actualización posterior se rechaza. |
+| Cerrar una credencial revocada | La PDA queda vacía y el emisor recupera la renta descontando la comisión. |
+
+[Prueba reproducible](frontend/tests/credential-lifecycle.mjs) · [Vista móvil del registro](evidencias/interfaz-movil.png)
