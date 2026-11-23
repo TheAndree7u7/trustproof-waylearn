@@ -36,6 +36,23 @@ pub mod certificate_registry {
         Ok(())
     }
 
+    /// Update the evidence for an active credential.
+    pub fn update(
+        ctx: Context<Update>,
+        credential_id: [u8; 32],
+        evidence_hash: [u8; 32],
+    ) -> Result<()> {
+        let credential = &mut ctx.accounts.credential;
+        require!(!credential.revoked, CertError::AlreadyRevoked);
+        credential.evidence_hash = evidence_hash;
+        emit!(CredentialUpdated {
+            issuer: credential.issuer,
+            credential_id,
+            evidence_hash,
+        });
+        Ok(())
+    }
+
     /// Revoke a credential. Only the original issuer can revoke.
     pub fn revoke(
         ctx: Context<Revoke>,
@@ -90,6 +107,19 @@ pub struct Revoke<'info> {
     pub issuer: Signer<'info>,
 }
 
+#[derive(Accounts)]
+#[instruction(credential_id: [u8; 32])]
+pub struct Update<'info> {
+    #[account(
+        mut,
+        seeds = [b"credential", issuer.key().as_ref(), credential_id.as_ref()],
+        bump = credential.bump,
+        has_one = issuer @ CertError::Unauthorized,
+    )]
+    pub credential: Account<'info, Credential>,
+    pub issuer: Signer<'info>,
+}
+
 // ── State ─────────────────────────────────────────────────────────────────────
 
 #[account]
@@ -117,6 +147,13 @@ pub struct CredentialRegistered {
     pub credential_id: [u8; 32],
     pub evidence_hash: [u8; 32],
     pub issued_at:     i64,
+}
+
+#[event]
+pub struct CredentialUpdated {
+    pub issuer: Pubkey,
+    pub credential_id: [u8; 32],
+    pub evidence_hash: [u8; 32],
 }
 
 #[event]
