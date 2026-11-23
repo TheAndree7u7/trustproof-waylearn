@@ -25,6 +25,7 @@ id.json
 # Build outputs and local validator state
 node_modules/
 .next/
+next-env.d.ts
 out/
 target/
 .anchor/
