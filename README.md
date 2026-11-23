@@ -32,7 +32,37 @@ La PDA se deriva con las semillas `credential`, clave pública del emisor e iden
 
 ## Devnet
 
-El programa está desplegado en `6EkKHfzSRojzjWjkeEed9ah19UhG38PMMLvgpqEYd4bU`. La revisión de esta rama añade `update` y `close`. Queda pendiente actualizar el despliegue y registrar evidencias de esas instrucciones en Devnet. [Programa en Solana Explorer](https://explorer.solana.com/address/6EkKHfzSRojzjWjkeEed9ah19UhG38PMMLvgpqEYd4bU?cluster=devnet) · [Transacción de despliegue](https://explorer.solana.com/tx/67r2g7omsNxdUiE59EznuN5Mmw249kmhAMuSX5FJ1ecpY7q4m97vTMgY3xKXN2LytxYjDKpE2GFmQa8MrQAbWwy?cluster=devnet)
+Programa `6EkKHfzSRojzjWjkeEed9ah19UhG38PMMLvgpqEYd4bU`. La revisión de entrega se desplegó en el slot **525429486**. Se descargó y comparó el binario en cadena con la compilación de Anchor. [Programa en Solana Explorer](https://explorer.solana.com/address/6EkKHfzSRojzjWjkeEed9ah19UhG38PMMLvgpqEYd4bU?cluster=devnet) · [Actualización del programa](https://explorer.solana.com/tx/2hvXcjfZ78awrak9toAHvr2JMVaqs6zpCpatuAqg8vATgwmA3qtU8MBwn7M2GYmGmKtzGUXKd2Vtu3hhAYnhFqrU?cluster=devnet)
+
+### Evidencias de funcionamiento
+
+La prueba empezó con la PDA `GS3py1gQMTpEc16iE4o171yxKJNzwT7e5zfvsFPbnQg` sin registrar. Se usó el identificador `CERT-WAYLEARN-20261123-CICLO` y datos de prueba.
+
+| Operación | Evidencia en Devnet | Slot | Resultado observado |
+| --- | --- | ---: | --- |
+| Crear y leer | [Ver transacción](https://explorer.solana.com/tx/2dxw835VaTBSvNTg85iJ3tjUJcymQm8UMwyVy9q8KaRRf3uggURH7138jqbbnA4jY4mT5nopnBp5eaDf2mhixCXF?cluster=devnet) | 525429716 | PDA activa con hash inicial y relación con el emisor. |
+| Modificar | [Ver transacción](https://explorer.solana.com/tx/3udXmy9PR2eQtA4esmHtoquGtrcXARkp3zHUvcZBCsfoxmrYR75e5xunjxdePa8Z335eAZMXx2ccGRgz6fYsCahN?cluster=devnet) | 525429744 | Se actualizó el hash de la misma PDA. El emisor y el identificador coincidieron. |
+| Revocar | [Ver transacción](https://explorer.solana.com/tx/3sPPDQy4cCbwtf3X2ngU6hJd4QVn7ei31FVhsPQqP13BGKqRdjrS2erEwbuTxN325Xncwj3LfrJgPHA4E2TJPnYt?cluster=devnet) | 525429751 | La lectura devolvió estado revocado y conservó el hash actualizado. |
+| Cerrar | [Ver transacción](https://explorer.solana.com/tx/EwySmDEMB6YEUW61wRqQRexct7yTB1w3FMCs2XAu3fuV8dpGokaVfoDvTVvYJHdvmHXucsJSzAgkBx3wWWUVFjV?cluster=devnet) | 525429764 | La PDA dejó de existir. Se devolvieron 1275080 lamports de renta al emisor. La comisión fue de 5000 lamports. |
+
+- Hash inicial `fcc1f536ed57e1b8daec6df834031cdcf5a2225b725a603c6bfa321bf63405b6`
+- Hash actualizado `fa3c34429cb11078d6ebea6c19944b6a56aaa68c4c1c5906dd90134632fce5dc`
+
+### Comprobación de permisos
+
+En cada simulación se verificó el error del programa y se leyó de nuevo la PDA para confirmar que conservó su estado.
+
+| Operación simulada | Error del programa | Slot observado |
+| --- | --- | ---: |
+| Actualizar con otra wallet | `ConstraintSeeds` | 525429725 |
+| Actualizar con un identificador ajeno a la PDA | `ConstraintSeeds` | 525429727 |
+| Cerrar una credencial activa | `CredentialStillActive` | 525429729 |
+| Editar una credencial revocada | `AlreadyRevoked` | 525429756 |
+| Cerrar una credencial revocada con otra wallet | `ConstraintSeeds` | 525429757 |
+
+### Consulta desde la interfaz
+
+En la demo, elige **Por PDA**, pega `6xUSf7MSuPoQEQT6EH2rJkj6iA7oiS5Jt5bw4MVU9kf` y selecciona **Consultar credencial**. La aplicación muestra la credencial activa `CERT-WAYLEARN-20261123-DEMO`, el emisor y el SHA-256 de su evidencia. [PDA de muestra](https://explorer.solana.com/address/6xUSf7MSuPoQEQT6EH2rJkj6iA7oiS5Jt5bw4MVU9kf?cluster=devnet) · [Registro de la muestra](https://explorer.solana.com/tx/2UDAc2FtEdhtMe57dgL9Wpb8XkNGkdBYKmYdQPyEDvejq8yt9Urq7iFNX1EPHrF9TXcGdVg1bQtSjAAv5RrFbkKH?cluster=devnet) · [Captura de la consulta](evidencias/consulta-devnet.png)
 
 ## Prueba local
 
